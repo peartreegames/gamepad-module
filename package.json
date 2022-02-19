@@ -1,0 +1,22 @@
+{
+  "name": "com.peartreegames.gamepadmodule",
+  "version": "0.1.0",
+  "displayName": "Gamepad Module",
+  "description": "Gamepad UI Input Module",
+  "unity": "2021.2",
+  "unityRelease": "2f1",
+  "documentationUrl": "https://github.com/peartreegames/gamepad-module",
+  "changelogUrl": "https://github.com/peartreegames/gamepad-module/changelog.html",
+  "licensesUrl": "https://github.com/peartreegames/gamepad-module/licensing.html",
+  "dependencies": {
+    "com.unity.inputsystem": "1.3.0"
+  },
+  "keywords": [
+    "peartree"
+  ],
+  "author": {
+    "name": "Peartree Games",
+    "email": "bgk@peartree.games",
+    "url": "https://peartree.games"
+  }
+}

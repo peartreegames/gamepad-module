@@ -1,0 +1,17 @@
+﻿{
+  "name": "PeartreeGames.GamepadModule.Editor",
+  "rootNamespace": "PeartreeGames.GamepadModule.Editor",
+  "references": [
+    "PeartreeGames.GamepadModule",
+    "Unity.InputSystem"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
