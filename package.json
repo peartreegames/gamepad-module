@@ -1,6 +1,6 @@
 {
   "name": "com.peartreegames.gamepadmodule",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "displayName": "Gamepad Module",
   "description": "Gamepad UI Input Module",
   "unity": "2021.2",

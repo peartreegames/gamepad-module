@@ -35,4 +35,9 @@ namespace PeartreeGames.GamepadModule
         void OnBumperLeft(ButtonEventData eventData);
         void OnBumperRight(ButtonEventData eventData);
     }
+    
+    public interface IDpadHandler : IEventSystemHandler
+    {
+        void OnDPad(ButtonAxisEventData eventData);
+    }
 }

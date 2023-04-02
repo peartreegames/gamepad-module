@@ -17,6 +17,7 @@ namespace PeartreeGames.GamepadModule.Editor
         private static readonly string[] ActionNames =
         {
             "moveAction",
+            "dpadAction",
             "confirmAction",
             "backAction",
             "menuAction",

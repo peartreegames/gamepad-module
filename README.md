@@ -8,3 +8,7 @@ Can be installed via the Package Manager > Add Package From Git URL...
 
 ## Architectural Overview
 ![Architecture](./Documentation/Architecture.png)
+
+## Changes
+
+Added explicit DPad InputAction

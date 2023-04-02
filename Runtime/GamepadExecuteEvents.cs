@@ -35,5 +35,9 @@ namespace PeartreeGames.GamepadModule
         public static ExecuteEvents.EventFunction<IBumperHandler> BumperRightHandler { get; } = ExecuteRight;
         private static void ExecuteRight(IBumperHandler handler, BaseEventData eventData) =>
             handler.OnBumperRight(ExecuteEvents.ValidateEventData<ButtonEventData>(eventData));
+
+        public static ExecuteEvents.EventFunction<IDpadHandler> DPadHandler { get; } = Execute;
+        private static void Execute(IDpadHandler handler, BaseEventData eventData) =>
+            handler.OnDPad(ExecuteEvents.ValidateEventData<ButtonAxisEventData>(eventData));
     }
 }

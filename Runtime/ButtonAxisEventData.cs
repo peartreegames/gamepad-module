@@ -3,10 +3,10 @@ using UnityEngine.InputSystem;
 
 namespace PeartreeGames.GamepadModule
 {
-    public class ButtonEventData : BaseEventData
+    public class ButtonAxisEventData : AxisEventData
     {
         public InputActionPhase Phase;
-        public ButtonEventData(EventSystem eventSystem) : base(eventSystem)
+        public ButtonAxisEventData(EventSystem eventSystem) : base(eventSystem)
         {
             Phase = InputActionPhase.Disabled;
         }

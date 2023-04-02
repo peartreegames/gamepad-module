@@ -3,6 +3,8 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
+// ReSharper disable Unity.NoNullPropagation
+
 namespace PeartreeGames.GamepadModule
 {
     public class GamepadUIInputModule : BaseInputModule
@@ -10,9 +12,11 @@ namespace PeartreeGames.GamepadModule
         [SerializeField] private float moveRepeatDelay = 0.5f;
         [SerializeField] private float moveRepeatRate = 0.1f;
 
+        // ReSharper disable once NotAccessedField.Local
         [SerializeField] private InputActionAsset actionsAsset;
 
         [SerializeField] private InputActionReference moveAction;
+        [SerializeField] private InputActionReference dpadAction;
         [SerializeField] private InputActionReference confirmAction;
         [SerializeField] private InputActionReference backAction;
         [SerializeField] private InputActionReference menuAction;
@@ -23,7 +27,8 @@ namespace PeartreeGames.GamepadModule
         [SerializeField] private InputActionReference bumperRightAction;
 
         private NavigationModel _navigationState;
-        private ButtonEventData buttonData;
+        private ButtonEventData _buttonData;
+        private ButtonAxisEventData _buttonAxisData;
 
         protected override void OnEnable()
         {
@@ -50,6 +55,7 @@ namespace PeartreeGames.GamepadModule
         private void EnableActions()
         {
             moveAction?.action?.Enable();
+            dpadAction?.action?.Enable();
             confirmAction?.action?.Enable();
             backAction?.action?.Enable();
             menuAction?.action?.Enable();
@@ -59,9 +65,11 @@ namespace PeartreeGames.GamepadModule
             bumperLeftAction?.action?.Enable();
             bumperRightAction?.action?.Enable();
         }
+
         private void DisableActions()
         {
             moveAction?.action?.Disable();
+            dpadAction?.action?.Disable();
             confirmAction?.action?.Disable();
             backAction?.action?.Disable();
             menuAction?.action?.Disable();
@@ -75,6 +83,7 @@ namespace PeartreeGames.GamepadModule
         private void HookActions()
         {
             HookAction(moveAction, OnMoveCallback);
+            HookAction(dpadAction, OnDPadCallback);
             HookAction(confirmAction, OnConfirmCallback);
             HookAction(backAction, OnBackCallback);
             HookAction(menuAction, OnMenuCallback);
@@ -84,9 +93,11 @@ namespace PeartreeGames.GamepadModule
             HookAction(bumperLeftAction, OnBumperLeftCallback);
             HookAction(bumperRightAction, OnBumperRightCallback);
         }
+
         private void UnhookActions()
         {
             UnhookAction(moveAction, OnMoveCallback);
+            UnhookAction(dpadAction, OnDPadCallback);
             UnhookAction(confirmAction, OnConfirmCallback);
             UnhookAction(backAction, OnBackCallback);
             UnhookAction(menuAction, OnMenuCallback);
@@ -96,7 +107,7 @@ namespace PeartreeGames.GamepadModule
             UnhookAction(bumperLeftAction, OnBumperLeftCallback);
             UnhookAction(bumperRightAction, OnBumperRightCallback);
         }
-        
+
         private static void HookAction(InputAction action, Action<InputAction.CallbackContext> callback)
         {
             if (action == null) return;
@@ -104,7 +115,7 @@ namespace PeartreeGames.GamepadModule
             action.performed += callback;
             action.canceled += callback;
         }
-        
+
         private static void UnhookAction(InputAction action, Action<InputAction.CallbackContext> callback)
         {
             if (action == null) return;
@@ -112,13 +123,23 @@ namespace PeartreeGames.GamepadModule
             action.performed -= callback;
             action.canceled -= callback;
         }
-        
+
         private BaseEventData GetButtonEventData(InputAction.CallbackContext ctx)
         {
-            buttonData ??= new ButtonEventData(eventSystem);
-            buttonData.Reset();
-            buttonData.Phase = ctx.phase;
-            return buttonData;
+            _buttonData ??= new ButtonEventData(eventSystem);
+            _buttonData.Reset();
+            _buttonData.Phase = ctx.phase;
+            return _buttonData;
+        }
+
+        private ButtonAxisEventData GetButtonAxisEventData(InputAction.CallbackContext ctx)
+        {
+            _buttonAxisData ??= new ButtonAxisEventData(eventSystem);
+            _buttonAxisData.Reset();
+            _buttonAxisData.Phase = ctx.phase;
+            _buttonAxisData.moveVector = ctx.ReadValue<Vector2>();
+            _buttonAxisData.moveDir = GetMoveDirection(_buttonAxisData.moveVector);
+            return _buttonAxisData;
         }
 
         private void ExecuteButtonEvent<T>(ExecuteEvents.EventFunction<T> handler, BaseEventData eventData)
@@ -130,24 +151,41 @@ namespace PeartreeGames.GamepadModule
 
         private void OnConfirmCallback(InputAction.CallbackContext ctx) =>
             ExecuteButtonEvent(GamepadExecuteEvents.ConfirmHandler, GetButtonEventData(ctx));
+
         private void OnBackCallback(InputAction.CallbackContext ctx) =>
             ExecuteButtonEvent(GamepadExecuteEvents.BackHandler, GetButtonEventData(ctx));
+
         private void OnMenuCallback(InputAction.CallbackContext ctx) =>
             ExecuteButtonEvent(GamepadExecuteEvents.MenuHandler, GetButtonEventData(ctx));
+
         private void OnOptionCallback(InputAction.CallbackContext ctx) =>
             ExecuteButtonEvent(GamepadExecuteEvents.OptionHandler, GetButtonEventData(ctx));
+
         private void OnTriggerLeftCallback(InputAction.CallbackContext ctx) =>
             ExecuteButtonEvent(GamepadExecuteEvents.TriggerLeftHandler, GetButtonEventData(ctx));
+
         private void OnTriggerRightCallback(InputAction.CallbackContext ctx) =>
             ExecuteButtonEvent(GamepadExecuteEvents.TriggerRightHandler, GetButtonEventData(ctx));
+
         private void OnBumperLeftCallback(InputAction.CallbackContext ctx) =>
             ExecuteButtonEvent(GamepadExecuteEvents.BumperLeftHandler, GetButtonEventData(ctx));
+
         private void OnBumperRightCallback(InputAction.CallbackContext ctx) =>
             ExecuteButtonEvent(GamepadExecuteEvents.BumperRightHandler, GetButtonEventData(ctx));
 
         private void OnMoveCallback(InputAction.CallbackContext ctx) =>
             _navigationState.Move = ctx.ReadValue<Vector2>();
-        
+
+        private void OnDPadCallback(InputAction.CallbackContext ctx)
+        {
+            if (eventSystem.currentSelectedGameObject == null) return;
+            var eventData = GetButtonAxisEventData(ctx);
+            ExecuteEvents.ExecuteHierarchy(eventSystem.currentSelectedGameObject, eventData,
+                GamepadExecuteEvents.DPadHandler);
+            if (eventData.used) return;
+            _navigationState.Move = eventData.moveVector;
+        }
+
         public override void Process()
         {
             ProcessNavigation(ref _navigationState);
@@ -176,7 +214,7 @@ namespace PeartreeGames.GamepadModule
 
             if (!eventSystem.sendNavigationEvents) return;
             var movement = navigationState.Move;
-            if (usedSelectionChange || Mathf.Approximately(movement.x, 0f) || Mathf.Approximately(movement.y, 0f))
+            if (usedSelectionChange || (Mathf.Approximately(movement.x, 0f) && Mathf.Approximately(movement.y, 0f)))
             {
                 navigationState.ConsecutiveMoveCount = 0;
                 return;
@@ -184,7 +222,6 @@ namespace PeartreeGames.GamepadModule
 
             var time = Time.unscaledTime;
             var moveDirection = GetMoveDirection(movement);
-
             if (moveDirection != navigationState.LastMoveDirection) navigationState.ConsecutiveMoveCount = 0;
             if (moveDirection == MoveDirection.None)
             {
